@@ -62,7 +62,7 @@ go test -v -run TestAuthentication -args -useTLS=true
 #### Insecure
 ```
 cd docker
-docker compose -f docker-compose-insecure,yml up -d
+docker compose -f docker-compose-insecure.yml up -d
 ```
 
 #### Secure (TLS Enabled)

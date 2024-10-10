@@ -2,47 +2,42 @@
 package miniotests
 
 import (
-	"crypto/tls"
-	"net"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 )
 
 func TestConnectivity(t *testing.T) {
-    server := os.Getenv("MINIO_SERVER")
-    port := os.Getenv("MINIO_PORT")
-    if port == "" {
-        port = "9000"
-    }
+    t.Log("Starting TestConnectivity")
 
-    secure := *useTLS
-    scheme := "http"
-    if secure {
-        scheme = "https"
-    }
-    address := net.JoinHostPort(server, port)
-    url := scheme + "://" + address
+    secure := TestConfig.Secure
+    t.Logf("Scheme: %s", TestConfig.Scheme)
 
-    // Set up HTTP client
+    address := TestConfig.Endpoint
+    url := TestConfig.Scheme + "://" + address
+    t.Logf("Connecting to Endpoint: %s", url)
+
     httpClient := &http.Client{
         Timeout: 5 * time.Second,
     }
 
     if secure {
-        httpClient.Transport = &http.Transport{
-            TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-        }
+        t.Log("Configuring TLS settings")
+        httpClient.Transport = TestConfig.Transport
     }
 
+    // Test HTTP(S) connectivity
+    t.Log("Sending HTTP GET request")
     response, err := httpClient.Get(url)
     if err != nil {
         t.Fatalf("HTTP connectivity test failed: %v", err)
     }
     defer response.Body.Close()
+    t.Logf("Received response with status code: %d", response.StatusCode)
 
     if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusForbidden {
         t.Fatalf("Unexpected HTTP status code: %d", response.StatusCode)
     }
+
+    t.Log("TestConnectivity completed successfully")
 }

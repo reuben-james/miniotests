@@ -3,9 +3,6 @@ package miniotests
 
 import (
 	"context"
-	"crypto/tls"
-	"net"
-	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -15,24 +12,14 @@ import (
 )
 
 func TestCRUDOperations(t *testing.T) {
-    server := os.Getenv("MINIO_SERVER")
-    port := os.Getenv("MINIO_PORT")
-    if port == "" {
-        port = "9000"
-    }
-    accessKey := os.Getenv("MINIO_ACCESS_KEY")
-    secretKey := os.Getenv("MINIO_SECRET_KEY")
+    t.Log("Starting TestCRUDOperations")
 
-    secure := *useTLS
-
-    endpoint := net.JoinHostPort(server, port)
-
-    var transport *http.Transport
-    if secure {
-        transport = &http.Transport{
-            TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-        }
-    }
+    // Use the centralized TestConfig
+    endpoint := TestConfig.Endpoint
+    accessKey := TestConfig.AccessKey
+    secretKey := TestConfig.SecretKey
+    secure := TestConfig.Secure
+    transport := TestConfig.Transport
 
     client, err := minio.New(endpoint, &minio.Options{
         Creds:     credentials.NewStaticV4(accessKey, secretKey, ""),
@@ -43,10 +30,12 @@ func TestCRUDOperations(t *testing.T) {
         t.Fatalf("Failed to create MinIO client: %v", err)
     }
 
+    // Test parameters
     bucketName := "test-bucket-" + time.Now().Format("20060102150405")
     testFileName := "testfile.txt"
     testFileContent := "This is a test file."
 
+    // Create test file
     err = os.WriteFile(testFileName, []byte(testFileContent), 0644)
     if err != nil {
         t.Fatalf("Failed to create test file: %v", err)
@@ -54,6 +43,7 @@ func TestCRUDOperations(t *testing.T) {
     defer os.Remove(testFileName)
 
     // Create Bucket
+    t.Logf("Creating bucket: %s", bucketName)
     err = client.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
     if err != nil {
         t.Fatalf("Bucket creation failed: %v", err)
@@ -66,6 +56,7 @@ func TestCRUDOperations(t *testing.T) {
     }()
 
     // Upload Object
+    t.Logf("Uploading object: %s", testFileName)
     _, err = client.FPutObject(context.Background(), bucketName, testFileName, testFileName, minio.PutObjectOptions{})
     if err != nil {
         t.Fatalf("File upload failed: %v", err)
@@ -122,4 +113,6 @@ func TestCRUDOperations(t *testing.T) {
             t.Fatalf("Object %s was not deleted", testFileName)
         }
     }
+
+    t.Log("TestCRUDOperations completed successfully")
 }
