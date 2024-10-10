@@ -66,6 +66,15 @@ docker compose -f docker-compose-insecure,yml up -d
 ```
 
 #### Secure (TLS Enabled)
+
+Place a Root CA, Server Certificate and Private Key in `docker/tls` to create the following files, respectively
+```
+docker/tls/ca.pem
+docker/tls/cert.pem
+docker/tls/key.pem
+```
+
+Stand up the secure stack
 ```
 cd docker
 docker compose up -d
