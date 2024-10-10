@@ -120,3 +120,12 @@ mc ls test/test-bucket-default
 # OUTPUT
 [YYYY-MM-DD HH:MM:SS UTC]    19B STANDARD manual-test-file.txt
 ```
+
+#### Console
+
+Minio Console should be a avilable at `https://minio:9001/` if you've deployed the secure stack. 
+
+You may need to add the following to your `/etc/hosts` file to get this working 
+```
+127.0.1.1   minio
+```
