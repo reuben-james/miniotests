@@ -55,6 +55,28 @@ Run just the Authentication test against a secure Minio
 go test -v -run TestAuthentication -args -useTLS=true
 ```
 
+## Benchmark Tests
+
+You can feed in extra parameters for configuring the benchmark tests
+
+The following will run the `BenchmarkUploadObjectParallel` test with 100 parallels
+```
+go test -v -bench=. -benchmem -parallel 100 -args -useTLS=true
+```
+
+Exclude regular tests and just run benchmarks
+```
+go test -v -run=^$ -bench=. -benchmem -parallel 100 -args -useTLS=true
+```
+
+Other common flags for benchmark tests
+```
+-benchmem           with memory allocation stats
+-benchtime=10s      how long to run each benchmark
+-count=3            how many times to run each benchmark
+-cpu=1,2,4,8        specify the number of cores to use
+```
+
 ## Local Development
 
 ### Stand up a local dev instance

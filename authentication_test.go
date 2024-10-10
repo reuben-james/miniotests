@@ -21,6 +21,15 @@ func TestAuthentication(t *testing.T) {
     t.Logf("Using endpoint: %s", endpoint)
     t.Logf("Secure mode: %v", secure)
 
+    options := &minio.Options{
+        Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+        Secure: secure,
+    }
+
+    if transport != nil {
+        options.Transport = transport
+    }
+    
     // Create client with good credentials
     client, err := minio.New(endpoint, &minio.Options{
         Creds:     credentials.NewStaticV4(accessKey, secretKey, ""),
