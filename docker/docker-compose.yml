@@ -1,0 +1,29 @@
+services:
+  minio:
+    container_name: minio
+    image: minio/minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    networks:
+      - minionetwork
+    volumes:
+      - ./tls/ca.pem:/root/.minio/certs/CAs/public.crt
+      - ./tls/cert.pem:/root/.minio/certs/public.crt
+      - ./tls/key.pem:/root/.minio/certs/private.key
+      - 'minio_data:/data'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_DEFAULT_BUCKETS: test-bucket-default
+      MINIO_BROWSER_REDIRECT_URL: https://minio:9001
+      MINIO_SERVER_URL: https://minio:9000
+    command: server --console-address ":9001" /data/minio/
+
+networks:
+  minionetwork:
+    driver: bridge
+
+volumes:
+  minio_data:
+    driver: local

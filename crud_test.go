@@ -1,3 +1,4 @@
+// crud_test.go
 package miniotests
 
 import (
@@ -21,16 +22,22 @@ func TestCRUDOperations(t *testing.T) {
     }
     accessKey := os.Getenv("MINIO_ACCESS_KEY")
     secretKey := os.Getenv("MINIO_SECRET_KEY")
-    secure := os.Getenv("MINIO_SECURE") == "true"
+
+    secure := *useTLS
 
     endpoint := net.JoinHostPort(server, port)
 
-    client, err := minio.New(endpoint, &minio.Options{
-        Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-        Secure: secure,
-        Transport: &http.Transport{
+    var transport *http.Transport
+    if secure {
+        transport = &http.Transport{
             TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-        },
+        }
+    }
+
+    client, err := minio.New(endpoint, &minio.Options{
+        Creds:     credentials.NewStaticV4(accessKey, secretKey, ""),
+        Secure:    secure,
+        Transport: transport,
     })
     if err != nil {
         t.Fatalf("Failed to create MinIO client: %v", err)
@@ -40,12 +47,10 @@ func TestCRUDOperations(t *testing.T) {
     testFileName := "testfile.txt"
     testFileContent := "This is a test file."
 
-    // Create test file
     err = os.WriteFile(testFileName, []byte(testFileContent), 0644)
     if err != nil {
         t.Fatalf("Failed to create test file: %v", err)
     }
-
     defer os.Remove(testFileName)
 
     // Create Bucket
@@ -53,8 +58,12 @@ func TestCRUDOperations(t *testing.T) {
     if err != nil {
         t.Fatalf("Bucket creation failed: %v", err)
     }
-
-    defer client.RemoveBucket(context.Background(), bucketName)
+    defer func() {
+        err = client.RemoveBucket(context.Background(), bucketName)
+        if err != nil {
+            t.Logf("Failed to remove bucket %s: %v", bucketName, err)
+        }
+    }()
 
     // Upload Object
     _, err = client.FPutObject(context.Background(), bucketName, testFileName, testFileName, minio.PutObjectOptions{})
@@ -68,7 +77,6 @@ func TestCRUDOperations(t *testing.T) {
     if err != nil {
         t.Fatalf("File download failed: %v", err)
     }
-
     defer os.Remove(downloadedFileName)
 
     // Verify File Integrity
@@ -105,12 +113,12 @@ func TestCRUDOperations(t *testing.T) {
     }
 
     // Verify Deletion
-    objectsCh := client.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
-    for obj := range objectsCh {
-        if obj.Err != nil {
-            t.Fatalf("Error listing objects: %v", obj.Err)
+    objectCh := client.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{})
+    for object := range objectCh {
+        if object.Err != nil {
+            t.Fatalf("Error listing objects: %v", object.Err)
         }
-        if obj.Key == testFileName {
+        if object.Key == testFileName {
             t.Fatalf("Object %s was not deleted", testFileName)
         }
     }

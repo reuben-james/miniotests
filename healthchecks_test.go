@@ -1,3 +1,4 @@
+// health_test.go
 package miniotests
 
 import (
@@ -15,7 +16,8 @@ func TestHealthChecks(t *testing.T) {
     if port == "" {
         port = "9000"
     }
-    secure := os.Getenv("MINIO_SECURE") == "true"
+
+    secure := *useTLS
     scheme := "http"
     if secure {
         scheme = "https"
@@ -28,7 +30,6 @@ func TestHealthChecks(t *testing.T) {
         Timeout: 5 * time.Second,
     }
 
-    // Skip SSL verification if using self-signed certificates
     if secure {
         httpClient.Transport = &http.Transport{
             TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

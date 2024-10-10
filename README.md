@@ -2,7 +2,12 @@
 
 A test suite for a Minio Object Store implemented natively in Go
 
-## ENIRONMENT
+## Prerequisites
+
+* docker
+* docker compose (Go)
+
+## ENVIRONMENT
 
 The following environment variables are required to be set, in order to run the test suite:
 ```
@@ -19,8 +24,14 @@ export MINIO_READONLY_SECRET_KEY="READONLY_SECRET_KEY"
 
 ## Run the tests
 
+Run against an insecrue Minio
 ```
 go test -v
+```
+
+Run against a Secure Minio
+```
+go test -v -args -useTLS=true
 ```
 
 Example output
@@ -39,20 +50,51 @@ PASS
 ok      github.com/reuben-james/miniotests      0.157s
 ```
 
-## Manual Testing
+Run just the Authentication test against a secure Minio
+```
+go test -v -run TestAuthentication -args -useTLS=true
+```
+
+## Local Development
+
+### Stand up a local dev instance
+
+#### Insecure
+```
+cd docker
+docker compose -f docker-compose-insecure,yml up -d
+```
+
+#### Secure (TLS Enabled)
+```
+cd docker
+docker compose up -d
+```
+
+#### MC Client
 
 Install the MC client for manual testing
 ```
 wget https://dl.min.io/client/mc/release/linux-amd64/mc
 chmod +x mc
 sudo mv mc /usr/local/bin/
-mc alias set test/ http://${MINIO_SERVER}:9000
+```
+
+Setup an mc alias
+```
+MINIO_URL=http://${MINIO_SERVER}:${MINIO_PORT}
+# OR IF SECURE
+MINIO_URL=https://${MINIO_SERVER}:${MINIO_PORT}
+
+mc alias set test/ ${MINIO_URL}
 $ Enter Access Key: 
 $ Enter Secret Key: 
 ```
 
-List buckets
+Make and verify a test bucket
 ```
+mc mb test/test-bucket-default/
+
 mc ls test
 # OUTPUT
 [YYYY-MM-DD HH:MM:SS UTC]     0B test-bucket-default/
